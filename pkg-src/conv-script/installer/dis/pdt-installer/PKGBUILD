@@ -1,0 +1,57 @@
+pkgname=pdt-installer
+pkgver=0.1
+pkgrel=1
+pkgdesc="Unified installer script for PdLinuXOS"
+arch=('any')
+url="https://example.com/pdt-installer"
+license=('GPL')
+depends=('bash' 'arch-install-scripts')
+optdepends=(
+  'bash-completion: enable Bash completion'
+  'zsh: enable Zsh completion'
+  'fish: enable Fish completion'
+)
+# چون فایل‌ها لوکال هستند و کنار PKGBUILD‌اند، مسیرشان را دقیق می‌دهیم:
+source=(
+  "pdt-installer/pdt-installer.sh"
+  "pdt-installer/completions/pdt-installer.bash"
+  "pdt-installer/completions/pdt-installer.zsh"
+  "pdt-installer/completions/pdt-installer.fish"
+  "pdt-installer/docs/pdt-installer.8"
+)
+sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP')
+
+# اگر لازم باشد چیزی را آماده کنیم (مثلاً تبدیل CRLF به LF)، می‌توانیم در prepare انجام دهیم
+prepare() {
+  cd "$srcdir"
+  # تبدیل CRLF به LF برای اطمینان (اگر dos2unix داری می‌توانی از آن هم استفاده کنی)
+  sed -i 's/\r$//' \
+    "pdt-installer/pdt-installer.sh" \
+    "pdt-installer/completions/pdt-installer.bash" \
+    "pdt-installer/completions/pdt-installer.zsh" \
+    "pdt-installer/completions/pdt-installer.fish" \
+    "pdt-installer/docs/pdt-installer.8"
+}
+
+package() {
+  # باینری اصلی
+  install -Dm755 "$srcdir/pdt-installer/pdt-installer.sh" \
+    "$pkgdir/usr/bin/pdt-installer"
+
+  # bash completion → باید نام فایل هدف «pdt-installer» باشد
+  install -Dm644 "$srcdir/pdt-installer/completions/pdt-installer.bash" \
+    "$pkgdir/usr/share/bash-completion/completions/pdt-installer"
+
+  # zsh completion → نام استاندارد با پیشوند underscore
+  install -Dm644 "$srcdir/pdt-installer/completions/pdt-installer.zsh" \
+    "$pkgdir/usr/share/zsh/site-functions/_pdt-installer"
+
+  # fish completion
+  install -Dm644 "$srcdir/pdt-installer/completions/pdt-installer.fish" \
+    "$pkgdir/usr/share/fish/vendor_completions.d/pdt-installer.fish"
+
+  # man page (gzip)
+  install -Dm644 "$srcdir/pdt-installer/docs/pdt-installer.8" \
+    "$pkgdir/usr/share/man/man8/pdt-installer.8"
+  gzip -n -f "$pkgdir/usr/share/man/man8/pdt-installer.8"
+}

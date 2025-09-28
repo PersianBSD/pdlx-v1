@@ -1,0 +1,89 @@
+pkgname=pdt-installer
+pkgver=0.1
+pkgrel=1
+pkgdesc="Unified installer script for PdLinuXOS"
+arch=('any')
+license=('GPL')
+depends=('bash' 'arch-install-scripts')
+optdepends=('bash-completion: Bash completion'
+            'zsh: Zsh completion'
+            'fish: Fish completion')
+source=('pdt-installer.tar.gz')
+sha256sums=('SKIP')
+
+# یک کمک‌تابع کوچک برای پیدا کردن فولدر ریشه‌ی سورس بعد از استخراج
+_srcroot() {
+  # فرض: بعد از استخراج، دقیقاً یک دایرکتوری در $srcdir ساخته می‌شود
+  # اگر چندتا بود، اولین موردی که با pdt-installer شروع شود را برمی‌داریم
+  local d
+  d="$(find "$srcdir" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' \
+        | grep -E '^pdt-installer($|-)' | head -n1)"
+  if [[ -z "$d" ]]; then
+    # fallback: اگر نام پوشه چیز دیگری بود، اولین دایرکتوری را بگیر
+    d="$(find "$srcdir" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | head -n1)"
+  fi
+  printf '%s\n' "$d"
+}
+
+prepare() {
+  cd "$srcdir"
+  _root="$(_srcroot)"
+
+  # اگر ساختار داخل آرشیو این‌طوری باشد:
+  # $_root/pdt-installer.sh
+  # $_root/completions/{bash,zsh,fish}
+  # $_root/docs/pdt-installer.8
+  # این sedها جواب می‌دهند. اگر زیرپوشه‌ی اضافی داشت، بخش بعدی را ببین.
+  if [[ -f "$_root/pdt-installer.sh" ]]; then
+    sed -i 's/\r$//' \
+      "$_root/pdt-installer.sh" \
+      "$_root/completions/pdt-installer.bash" \
+      "$_root/completions/pdt-installer.zsh" \
+      "$_root/completions/pdt-installer.fish" \
+      "$_root/docs/pdt-installer.8"
+  else
+    # بعضی آرشیوها یک پوشه‌ی اضافه دارند مثل $_root/pdt-installer/pdt-installer.sh
+    # در این حالت، یک سطح پایین‌تر برو:
+    _root2="$(find "$_root" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' \
+              | grep -E '^pdt-installer($|-)' | head -n1)"
+    if [[ -z "$_root2" ]]; then
+      echo "Could not locate pdt-installer.sh inside extracted tree" >&2
+      return 1
+    fi
+    _root="$_root/$_root2"
+    sed -i 's/\r$//' \
+      "$_root/pdt-installer.sh" \
+      "$_root/completions/pdt-installer.bash" \
+      "$_root/completions/pdt-installer.zsh" \
+      "$_root/completions/pdt-installer.fish" \
+      "$_root/docs/pdt-installer.8"
+  fi
+}
+
+package() {
+  cd "$srcdir"
+  _root="$(_srcroot)"
+
+  if [[ ! -f "$_root/pdt-installer.sh" ]]; then
+    # همان هندل سناریوی زیرپوشه‌ی اضافه:
+    _root2="$(find "$_root" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' \
+              | grep -E '^pdt-installer($|-)' | head -n1)"
+    _root="$_root/$_root2"
+  fi
+
+  install -Dm755 "$_root/pdt-installer.sh" \
+    "$pkgdir/usr/bin/pdt-installer"
+
+  install -Dm644 "$_root/completions/pdt-installer.bash" \
+    "$pkgdir/usr/share/bash-completion/completions/pdt-installer"
+
+  install -Dm644 "$_root/completions/pdt-installer.zsh" \
+    "$pkgdir/usr/share/zsh/site-functions/_pdt-installer"
+
+  install -Dm644 "$_root/completions/pdt-installer.fish" \
+    "$pkgdir/usr/share/fish/vendor_completions.d/pdt-installer.fish"
+
+  install -Dm644 "$_root/docs/pdt-installer.8" \
+    "$pkgdir/usr/share/man/man8/pdt-installer.8"
+  gzip -n -f "$pkgdir/usr/share/man/man8/pdt-installer.8"
+}

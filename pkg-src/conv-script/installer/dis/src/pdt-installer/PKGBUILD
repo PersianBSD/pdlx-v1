@@ -1,0 +1,16 @@
+pkgname=pdt-installer
+pkgver=0.1
+pkgrel=1
+pkgdesc="Unified installer script for PdLinuXOS"
+arch=('any')
+license=('GPL')
+depends=('bash' 'arch-install-scripts')
+source=("pdt-installer")
+sha256sums=('SKIP')
+
+package() {
+  install -Dm755 "$srcdir/pdt-installer" "$pkgdir/usr/local/sbin/pdt-installer"
+  install -Dm644 "$srcdir/pdt-installer.bash-completion" "$pkgdir/usr/share/bash-completion/completions/pdt-installer"
+  install -Dm644 "$srcdir/_pdt-installer" "$pkgdir/usr/share/zsh/site-functions/_pdt-installer"
+  install -Dm644 "$srcdir/pdt-installer.8" "$pkgdir/usr/share/man/man8/pdt-installer.8"
+}

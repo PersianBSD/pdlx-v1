@@ -1,0 +1,69 @@
+.\" ------------------------------------------------------------------------------
+.\" Project:   pdt-installer
+.\" Author:    Ali Asadi <ali.asady@gmail.com>
+.\" Team:      Persian Developer Team
+.\" License:   GPL-3.0-or-later
+.\" ------------------------------------------------------------------------------
+
+.TH PDT-INSTALLER 8 "September 2025" "pdt-installer 0.1.1" "System Administration"
+.SH NAME
+pdt-installer \- unified CLI for pacstrap, arch-chroot, and genfstab
+.SH SYNOPSIS
+.B pdt-installer
+[\fIGlobal options\fR] [\fB--base\fR|\fB--chroot\fR|\fB--fstab\fR] [\fIsubcommand options\fR] [\fIargs...\fR]
+.SH DESCRIPTION
+\fBpdt-installer\fR provides a single entrypoint to three tools from arch-install-scripts:
+\fBpacstrap(8)\fR, \fBarch-chroot(8)\fR, and \fBgenfstab(8)\fR. It preserves a 1:1 mapping of options while adding
+global flags for verbosity, dry-run, logging, and consistent exit codes.
+.SH GLOBAL OPTIONS
+.TP
+.BR -v ", " --verbose
+Increase verbosity.
+.TP
+.BR -q ", " --quiet
+Reduce output where sensible.
+.TP
+.BR --dry-run
+Print intended actions without executing.
+.TP
+.BR --log " " \fIfile\fR
+Append executed commands to \fIfile\fR.
+.TP
+.BR --version
+Show version and exit.
+.TP
+.BR -h ", " --help
+Show this help.
+.SH SUBCOMMANDS
+.SS --base
+Acts like \fBpacstrap(8)\fR. Options are passed through 1:1:
+\fB-C\fR \fIfile\fR, \fB-c\fR, \fB-D\fR, \fB-G\fR, \fB-i\fR, \fB-K\fR, \fB-M\fR, \fB-N\fR, \fB-P\fR, \fB-U\fR, \fB-h\fR.
+See \fBpacstrap(8)\fR for semantics.
+.SS --chroot
+Acts like \fBarch-chroot(8)\fR, ensuring API filesystems are available inside ROOT:
+bind-mounts \fB/dev\fR, \fB/proc\fR, \fB/sys\fR and exposes \fB/etc/resolv.conf\fR. Options:
+\fB-N\fR, \fB-u\fR \fIuser[:group]\fR, \fB-r\fR, \fB-h\fR. See \fBarch-chroot(8)\fR.
+.SS --fstab
+Acts like \fBgenfstab(8)\fR with options:
+\fB-L\fR, \fB-U\fR, \fB-t\fR \fITAG\fR, \fB-p\fR, \fB-h\fR. See \fBgenfstab(8)\fR.
+.SH EXAMPLES
+Generate an fstab with UUIDs:
+.PP
+.nf
+pdt-installer --fstab -U /mnt >> /mnt/etc/fstab
+.fi
+Install a base system using host cache and then chroot:
+.PP
+.nf
+pdt-installer --base -U /mnt base linux
+pdt-installer --chroot /mnt
+.fi
+.SH EXIT STATUS
+0 success; 2 bad arguments; 10 missing dependencies;
+20..29 base/pacstrap errors; 30..39 chroot errors; 40..49 fstab errors.
+.SH SEE ALSO
+pacstrap(8) \- https://man.archlinux.org/man/pacstrap.8
+.br
+arch-chroot(8) \- https://man.archlinux.org/man/arch-chroot.8
+.br
+genfstab(8) \- https://man.archlinux.org/man/genfstab.8
